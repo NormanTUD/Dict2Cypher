@@ -174,3 +174,57 @@ class QueryRaw:
 
     def cypher(self):
         return self._cypher
+
+class D2C:
+    """Höhere Abstraktion für Nodes & Relationships in Neo4j"""
+
+    @staticmethod
+    def node(label, alias=None, props=None):
+        return Dict2Cypher.create_node(label, alias, props)
+
+    @staticmethod
+    def match_node(label, alias=None, props=None):
+        return Dict2Cypher.match_node(label, alias, props)
+
+    @staticmethod
+    def merge_node(label, alias=None, props=None):
+        return Dict2Cypher.merge_node(label, alias, props)
+
+    @staticmethod
+    def rel(from_node, to_node, rel_type, alias=None, props=None, action="create"):
+        if action.lower() == "create":
+            return Dict2Cypher.create_rel(from_node, to_node, rel_type, alias, props)
+        elif action.lower() == "match":
+            return Dict2Cypher.match_rel(from_node, to_node, rel_type, alias)
+        else:
+            raise ValueError(f"Unknown action {action}")
+
+    @staticmethod
+    def chain(*elements, return_aliases=None):
+        """
+        Baut mehrere Nodes & Relationships zusammen, fügt automatisch RETURN hinzu.
+        Beispiel:
+        chain(
+            D2C.node("Person", "p", {"name":"Alice"}),
+            D2C.node("Person", "q", {"name":"Bob"}),
+            D2C.rel("p","q","KNOWS", "k")
+        )
+        """
+        cy_parts = [e.cypher() for e in elements]
+        if return_aliases:
+            cy_parts.append("RETURN " + ",".join(return_aliases))
+        return "\n".join(cy_parts)
+
+    @staticmethod
+    def auto_chain(elements):
+        """
+        Automatisches RETURN für alle Aliase in Nodes & Relationships.
+        Nutzt interne Alias-Erkennung.
+        """
+        aliases = []
+        for e in elements:
+            if isinstance(e, Query):
+                for p in e.paths:
+                    if isinstance(p, dict):
+                        aliases.extend(e._extract_aliases(p))
+        return D2C.chain(*elements, return_aliases=aliases)

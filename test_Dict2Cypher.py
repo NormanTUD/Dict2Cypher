@@ -1,5 +1,5 @@
 import unittest
-from dict2cypher import Dict2Cypher
+from dict2cypher import Dict2Cypher, D2C
 import itertools
 
 class TestDict2Cypher(unittest.TestCase):
@@ -240,6 +240,68 @@ class TestDict2Cypher(unittest.TestCase):
         self.assertIn("(a)-[r:FRIEND", cy)
         self.assertIn("(b)", cy)  # Zielknoten prüfen
 
+
+    def test_create_single_node(self):
+        q = D2C.node("Person", "p", {"name": "Alice"})
+        cy = q.cypher()
+        self.assertIn("CREATE (p:Person", cy)
+        self.assertIn("name: 'Alice'", cy)
+
+    def test_match_single_node(self):
+        q = D2C.match_node("Person", "p", {"age": 30})
+        cy = q.cypher()
+        self.assertIn("MATCH (p:Person", cy)
+        self.assertIn("age: 30", cy)
+
+    def test_merge_single_node(self):
+        q = D2C.merge_node("Person", "p", {"email": "x@x.com"})
+        cy = q.cypher()
+        self.assertIn("MERGE (p:Person", cy)
+        self.assertIn("email: 'x@x.com'", cy)
+
+    def test_create_relationship(self):
+        q = D2C.rel("p", "q", "KNOWS", alias="k", props={"since": 2020})
+        cy = q.cypher()
+        self.assertIn("(p)-[k:KNOWS", cy)
+        self.assertIn("(q)", cy)
+        self.assertIn("since: 2020", cy)
+
+    def test_match_relationship(self):
+        q = D2C.rel("a", "b", "FRIEND", alias="r", action="match")
+        cy = q.cypher()
+        self.assertIn("(a)-[r:FRIEND", cy)
+        self.assertIn("(b)", cy)
+
+    def test_chain_manual_return(self):
+        n1 = D2C.node("Person", "p", {"name": "Alice"})
+        n2 = D2C.node("Person", "q", {"name": "Bob"})
+        r  = D2C.rel("p", "q", "KNOWS", "k")
+        cy = D2C.chain(n1, n2, r, return_aliases=["p","q","k"])
+        self.assertIn("CREATE (p:Person", cy)
+        self.assertIn("CREATE (q:Person", cy)
+        self.assertIn("(p)-[k:KNOWS]->(q)", cy)
+        self.assertIn("RETURN p,q,k", cy)
+
+    def test_auto_chain(self):
+        n1 = D2C.node("Person", "p", {"name": "Alice"})
+        n2 = D2C.node("Person", "q", {"name": "Bob"})
+        r  = D2C.rel("p", "q", "KNOWS", "k")
+        cy = D2C.auto_chain([n1, n2, r])
+        self.assertIn("CREATE (p:Person", cy)
+        self.assertIn("CREATE (q:Person", cy)
+        self.assertIn("(p)-[k:KNOWS]->(q)", cy)
+        # Auto RETURN prüft, dass alle Aliase enthalten sind
+        self.assertIn("RETURN p,q,k", cy)
+
+    def test_chain_mixed_actions(self):
+        m1 = D2C.match_node("Person", "p", {"age": 30})
+        c1 = D2C.node("Company", "c", {"name": "Acme"})
+        r  = D2C.rel("p", "c", "WORKS_AT", "w")
+        cy = D2C.chain(m1, c1, r, return_aliases=["p","c","w"])
+        self.assertIn("MATCH (p:Person", cy)
+        self.assertIn("CREATE (c:Company", cy)
+        self.assertIn("(p)-[w:WORKS_AT]->(c)", cy)
+        self.assertIn("RETURN p,c,w", cy)
 
 if __name__ == "__main__":
     unittest.main()
