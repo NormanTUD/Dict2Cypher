@@ -18,7 +18,7 @@ setuptools.setup(
     description="Generate Cypher from dicts",
     author="Norman",
     author_email="your_email@example.com",
-    packages=setuptools.find_packages(),  # <-- sucht jetzt im Root
+    packages=setuptools.find_packages(),
     python_requires=">=3.9",
     install_requires=[],
     classifiers=[
