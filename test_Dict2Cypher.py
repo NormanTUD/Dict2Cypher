@@ -208,5 +208,38 @@ class TestDict2Cypher(unittest.TestCase):
         cy = q.cypher()
         self.assertIn("DETACH DELETE p,q", cy)
 
+    def test_match_node_simple(self):
+        q = Dict2Cypher.match_node("Person", alias="p", props={"name": "Alice"}).return_("p")
+        cy = q.cypher()
+        self.assertIn("(p:Person", cy)
+        self.assertIn("Alice", cy)
+        self.assertIn("RETURN p", cy)
+
+    def test_create_node_simple(self):
+        q = Dict2Cypher.create_node("Person", alias="p", props={"age": 30})
+        cy = q.cypher()
+        self.assertIn("CREATE (p:Person", cy)
+        self.assertIn("age: 30", cy)
+
+    def test_merge_node_simple(self):
+        q = Dict2Cypher.merge_node("Person", alias="p", props={"email": "x@x.com"})
+        cy = q.cypher()
+        self.assertIn("MERGE (p:Person", cy)
+        self.assertIn("email: 'x@x.com'", cy)
+
+    def test_create_rel_simple(self):
+        q = Dict2Cypher.create_rel("p", "q", "KNOWS", alias="k", props={"since": 2020})
+        cy = q.cypher()
+        self.assertIn("(p)-[k:KNOWS", cy)
+        self.assertIn("(q)", cy)  # Nur prüfen, dass Zielknoten korrekt referenziert wird
+        self.assertIn("since: 2020", cy)
+
+    def test_match_rel_simple(self):
+        q = Dict2Cypher.match_rel("a", "b", "FRIEND", alias="r")
+        cy = q.cypher()
+        self.assertIn("(a)-[r:FRIEND", cy)
+        self.assertIn("(b)", cy)  # Zielknoten prüfen
+
+
 if __name__ == "__main__":
     unittest.main()

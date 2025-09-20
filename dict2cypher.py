@@ -43,6 +43,30 @@ class Dict2Cypher:
         q = f"CREATE CONSTRAINT FOR (n:{label}) REQUIRE n.{prop} IS {type}"
         return QueryRaw(q)
 
+    @classmethod
+    def match_node(cls, label, alias=None, props=None):
+        alias = alias or cls._gen_alias()
+        return cls.match({f"{label}#{alias}": props or {}})
+
+    @classmethod
+    def create_node(cls, label, alias=None, props=None):
+        alias = alias or cls._gen_alias()
+        return cls.create({f"{label}#{alias}": props or {}})
+
+    @classmethod
+    def merge_node(cls, label, alias=None, props=None):
+        alias = alias or cls._gen_alias()
+        return cls.merge({f"{label}#{alias}": props or {}})
+
+    @classmethod
+    def create_rel(cls, from_alias, to_alias, rel_type, alias=None, props=None):
+        alias = alias or cls._gen_alias()
+        return cls.create({f"{rel_type}#{alias}": {"from": from_alias, "to": to_alias, **(props or {})}})
+
+    @classmethod
+    def match_rel(cls, from_alias, to_alias, rel_type, alias=None):
+        alias = alias or cls._gen_alias()
+        return cls.match({f"{rel_type}#{alias}": {"from": from_alias, "to": to_alias}})
 
 class Query:
     def __init__(self, action, paths, detach=False):
