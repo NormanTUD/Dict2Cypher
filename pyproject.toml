@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dict2cypher"
-version = "0.1"
+version = "0.11"
 description = "Convert Python dicts to Neo4j Cypher queries easily"
 authors = [
     {name = "Norman Koch", email = "norman.koch@tu-dresden.de"}
