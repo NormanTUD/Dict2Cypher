@@ -1,5 +1,5 @@
 import unittest
-from Dict2Cypher import Dict2Cypher
+from dict2cypher import Dict2Cypher
 
 class TestDict2Cypher(unittest.TestCase):
 
